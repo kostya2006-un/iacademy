@@ -1,7 +1,9 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from .services import get_path_ava_url, validate_ava_img
 # Create your models here.
 
 
@@ -46,6 +48,12 @@ class CustomUser(AbstractUser):
     email = models.EmailField(_("email address"), unique=True)
     is_teacher = models.BooleanField(_("is_teacher"),default=False)
     objects = CustomUserManager()
-
+    ava = models.ImageField(
+        upload_to=get_path_ava_url,
+        default='profilo.jpg',
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(allowed_extensions=["jpg","jpeg"]), validate_ava_img]
+    )
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

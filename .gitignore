@@ -1,3 +1,5 @@
 .idea
 **/__pycache__
 app/oauth/migrations
+/app/!*media/.gitkeep
+/app/media/*
