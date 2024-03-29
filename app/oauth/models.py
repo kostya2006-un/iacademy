@@ -41,10 +41,10 @@ class CustomUser(AbstractUser):
         blank=True,
         null=True,
     )
-    first_name = models.CharField(_("first name"), max_length=150)
-    last_name = models.CharField(_("last name"), max_length=150)
+    first_name = models.CharField(_("first name"), max_length=150, blank=False)
+    last_name = models.CharField(_("last name"), max_length=150,blank=False)
     email = models.EmailField(_("email address"), unique=True)
-
+    is_teacher = models.BooleanField(_("is_teacher"),default=False)
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
