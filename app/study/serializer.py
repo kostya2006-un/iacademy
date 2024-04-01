@@ -6,6 +6,12 @@ from .models import Course
 User = get_user_model()
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("first_name", "last_name")
+
+
 class Teacher_and_Student_serializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -13,6 +19,8 @@ class Teacher_and_Student_serializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
+    teacher = UserSerializer(read_only=True)
+
     class Meta:
         model = Course
         fields = "__all__"

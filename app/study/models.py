@@ -15,6 +15,20 @@ class Course(models.Model):
     def __str__(self):
         return self.title
 
+    def save(self, *args, **kwargs):
+        # Проверяем, является ли пользователь учителем
+        if self.teacher.is_teacher:
+            super().save(*args, **kwargs)
+
+
+class Subscription(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='subscriptions')
+    time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('student', 'course')
+
 
 class Lesson(models.Model):
     teacher = models.ForeignKey(User,on_delete=models.CASCADE, related_name='lessons')
@@ -23,6 +37,7 @@ class Lesson(models.Model):
     video = models.FileField(
         upload_to=get_video_path,
         validators=[FileExtensionValidator(allowed_extensions=['asf','mp4','flv','mkv'])],
+        blank=True,
     )
     created_at = models.DateTimeField(auto_now_add=True)
     views = models.PositiveIntegerField(default=0)
@@ -30,5 +45,9 @@ class Lesson(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if self.teacher.is_teacher and self.course.teacher == self.teacher:
+            super().save(*args, **kwargs)
 
 

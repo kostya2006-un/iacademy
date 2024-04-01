@@ -24,9 +24,11 @@ class All_teachers_view(generics.ListAPIView):
 
 
 class Course_view(generics.ListCreateAPIView):
-    queryset = Course.objects.all()
     serializer_class = CourseSerializer
     permission_classes = [IsAuthenticatedOrReadOnly,Is_teacher_or_readonly, ]
+
+    def get_queryset(self):
+        return Course.objects.filter(teacher = self.request.user)
 
     def perform_create(self, serializer):
         if not self.request.user.is_authenticated or not self.request.user.is_teacher:
@@ -38,3 +40,8 @@ class CourseRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
     permission_classes = [Is_Owner, ]
+
+
+class CourseAll(generics.ListAPIView):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
