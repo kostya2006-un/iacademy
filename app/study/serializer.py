@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Course
+from .models import Course,Subscription
 
 
 User = get_user_model()
@@ -25,3 +25,12 @@ class CourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = "__all__"
         read_only_fields = ['teacher']
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    student = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Subscription
+        fields = "__all__"
+        read_only_fields = ['student']

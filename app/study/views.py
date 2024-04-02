@@ -1,8 +1,8 @@
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from .models import Course
-from .serializer import Teacher_and_Student_serializer,CourseSerializer
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from .models import Course,Subscription
+from .serializer import Teacher_and_Student_serializer,CourseSerializer,SubscriptionSerializer
 from django.contrib.auth import get_user_model
 from .permission import Is_teacher_or_readonly,Is_Owner
 
@@ -45,3 +45,16 @@ class CourseRetrieveUpdateView(generics.RetrieveUpdateAPIView):
 class CourseAll(generics.ListAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
+
+
+class SubscriptionCreateView(generics.ListCreateAPIView):
+    serializer_class = SubscriptionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Subscription.objects.filter(student = self.request.user)
+
+    def perform_create(self, serializer):
+        student = self.request.user
+
+        serializer.save(student = student)
