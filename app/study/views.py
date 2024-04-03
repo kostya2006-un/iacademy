@@ -2,7 +2,7 @@ from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from .models import Course,Subscription
-from .serializer import Teacher_and_Student_serializer,CourseSerializer,SubscriptionSerializer
+from .serializer import Teacher_and_Student_serializer,CourseSerializer,SubscriptionSerializer,UserSerializer
 from django.contrib.auth import get_user_model
 from .permission import Is_teacher_or_readonly,Is_Owner
 
@@ -58,3 +58,17 @@ class SubscriptionCreateView(generics.ListCreateAPIView):
         student = self.request.user
 
         serializer.save(student = student)
+
+
+class CourseSubscriptionView(generics.ListAPIView):
+    serializer_class = UserSerializer
+
+    def get_queryset(self):
+        course_id = self.kwargs["course_id"]
+
+        course = Course.objects.get(id = course_id)
+
+        students = course.subscriptions.all().select_related('student').values('student')
+        return User.objects.filter(id__in=students)
+
+
