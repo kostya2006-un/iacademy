@@ -1,8 +1,11 @@
+import os
+
 from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
 from django.db import models
-from .services import get_video_path
+from rest_framework.exceptions import PermissionDenied
 
+from .services import get_video_path, delete_old_video_path
 
 User = get_user_model()
 
@@ -47,7 +50,23 @@ class Lesson(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
+        if self.pk:
+            old_lesson = Lesson.objects.get(pk=self.pk)
+            if old_lesson.video != self.video:
+                old_file_path = old_lesson.video.path
+                if old_file_path and os.path.exists(old_file_path):
+                    os.remove(old_file_path)
+
         if self.teacher.is_teacher and self.course.teacher == self.teacher:
             super().save(*args, **kwargs)
+        else:
+            raise PermissionDenied("You are not allowed to create a lesson for this course.")
 
+
+    def delete(self, *args, **kwargs):
+        # Удаляем старый файл перед удалением объекта из базы данных
+        if self.video:
+            delete_old_video_path(self.video.path)
+        # Вызываем стандартный метод delete для удаления объекта
+        super().delete(*args, **kwargs)
 
