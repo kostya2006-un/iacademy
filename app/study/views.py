@@ -1,5 +1,9 @@
-from rest_framework import generics, viewsets
+import os
+
+from django.http import Http404, FileResponse
+from rest_framework import generics, viewsets, views
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from .models import Course, Subscription, Lesson
 from .serializer import Teacher_and_Student_serializer, CourseSerializer, SubscriptionSerializer, UserSerializer, \
@@ -82,3 +86,43 @@ class LessonTeacherView(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(teacher = self.request.user)
+
+
+class LessonCourseView(generics.ListAPIView):
+    serializer_class = LessonSerializer
+    permission_classes = [IsAuthenticated, ]
+
+    def get_queryset(self):
+        course_id = self.kwargs.get('pk')
+        user = self.request.user
+
+        if Subscription.objects.filter(student=user, course_id=course_id).exists():
+            return Lesson.objects.filter(course_id=course_id)
+        else:
+            if Lesson.objects.filter(course_id=course_id, teacher=user).exists():
+                return Lesson.objects.filter(course_id=course_id)
+            else:
+                raise PermissionDenied(
+                    "You are not subscribed to this course and not a teacher of any lesson in this course.")
+
+
+class LessonVideoView(views.APIView):
+
+    def set_play(self,lesson):
+        lesson.views += 1
+        lesson.save()
+
+    def get(self,request,pk):
+        lesson = get_object_or_404(Lesson, id=pk)
+
+        course_sub = Subscription.objects.filter(student = request.user, course = lesson.course)
+        is_teacher = Lesson.objects.filter(course_id=lesson.course.id, teacher=request.user)
+        if course_sub or is_teacher:
+            if os.path.exists(lesson.video.path):
+                self.set_play(lesson)
+                return FileResponse(open(lesson.video.path, "rb"), filename=lesson.video.name)
+            else:
+                return Http404
+        else:
+            raise PermissionDenied("You don't have permission to watch this lesson.")
+

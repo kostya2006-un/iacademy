@@ -40,7 +40,6 @@ class Lesson(models.Model):
     video = models.FileField(
         upload_to=get_video_path,
         validators=[FileExtensionValidator(allowed_extensions=['asf','mp4','flv','mkv'])],
-        blank=True,
     )
     created_at = models.DateTimeField(auto_now_add=True)
     views = models.PositiveIntegerField(default=0)
