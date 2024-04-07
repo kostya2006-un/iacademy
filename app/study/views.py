@@ -1,13 +1,13 @@
 import os
-
 from django.http import Http404, FileResponse
-from rest_framework import generics, viewsets, views
+from rest_framework import generics, viewsets, views, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
-from .models import Course, Subscription, Lesson
-from .serializer import Teacher_and_Student_serializer, CourseSerializer, SubscriptionSerializer, UserSerializer, \
-    LessonSerializer
+from rest_framework.response import Response
+
+from .models import Course, Subscription, Lesson, Application
+from .serializer import Teacher_and_Student_serializer, CourseSerializer, SubscriptionSerializer, UserSerializer, AplicationSerializer, LessonSerializer
 from django.contrib.auth import get_user_model
 from .permission import Is_teacher_or_readonly,Is_Owner
 
@@ -61,8 +61,63 @@ class SubscriptionCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         student = self.request.user
+        course = serializer.validated_data['course']
 
-        serializer.save(student = student)
+        if course.closed:
+            Application.objects.create(student=student,course=course)
+        else:
+            serializer.save(student = student)
+
+
+class TeacherApplicationsView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        teacher = request.user
+
+        applications = Application.objects.filter(course__teacher=teacher)
+
+        serializer = AplicationSerializer(applications, many=True)
+
+        return Response(serializer.data)
+
+
+class TeacherActivateView(views.APIView):
+    permission_classes = [IsAuthenticated, Is_teacher_or_readonly]
+
+    def get(self, request, aplication_id):
+        try:
+            application = Application.objects.get(id=aplication_id)
+        except Application.DoesNotExist:
+            return Response("Заявка не найдена", status=status.HTTP_404_NOT_FOUND)
+
+        # Проверяем, является ли текущий пользователь учителем, у которого есть право активации заявок
+        if not request.user == application.course.teacher:
+            return Response("У вас нет прав для активации заявок", status=status.HTTP_403_FORBIDDEN)
+
+        # Проверяем, что заявка еще не активирована
+        if application.status:
+            return Response("Заявка уже активирована", status=status.HTTP_400_BAD_REQUEST)
+
+        # Устанавливаем статус заявки в True
+        application.status = True
+        application.save()
+
+        # Создаем подписку на курс для студента
+        existing_subscription = Subscription.objects.filter(student=application.student,
+                                                            course=application.course).first()
+        if existing_subscription:
+            # Если подписка уже существует, просто обновляем ее статус
+            existing_subscription.status = True
+            existing_subscription.save()
+            return Response("Подписка успешно активирована", status=status.HTTP_200_OK)
+        else:
+            # Если подписка не существует, создаем новую
+            Subscription.objects.create(student=application.student, course=application.course)
+            # Устанавливаем статус заявки в True
+            application.status = True
+            application.save()
+            return Response("Заявка успешно активирована и студент записан на курс", status=status.HTTP_200_OK)
 
 
 class CourseSubscriptionView(generics.ListAPIView):

@@ -14,6 +14,7 @@ class Course(models.Model):
     teacher = models.ForeignKey(User,on_delete=models.CASCADE, related_name='courses')
     title = models.CharField(max_length=250)
     description = models.TextField()
+    closed = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title
@@ -26,8 +27,18 @@ class Course(models.Model):
 
 class Subscription(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='subscriptions')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='subscriptions_sub')
     time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('student', 'course')
+
+
+class Application(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='applications_app')
+    time = models.DateTimeField(auto_now_add=True)
+    status = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('student', 'course')

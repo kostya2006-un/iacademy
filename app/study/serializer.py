@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Course,Subscription,Lesson
+from .models import Course,Subscription,Lesson,Application
 from .services import delete_old_video_path
 
 User = get_user_model()
@@ -47,3 +47,12 @@ class LessonSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         delete_old_video_path(instance.video.path)
         return super().update(instance, validated_data)
+
+
+class AplicationSerializer(serializers.ModelSerializer):
+    student = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Application
+        fields = "__all__"
+        read_only_fields = ['student','status']

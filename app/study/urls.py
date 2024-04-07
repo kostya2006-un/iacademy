@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import All_students_view,All_teachers_view,Course_view,CourseRetrieveUpdateView,CourseAll,SubscriptionCreateView
-from .views import CourseSubscriptionView,LessonTeacherView,LessonCourseView,LessonVideoView
-
+from .views import CourseSubscriptionView,LessonTeacherView,LessonCourseView,LessonVideoView, TeacherApplicationsView
+from .views import TeacherActivateView
 urlpatterns = [
     path('students/',All_students_view.as_view(),name = 'students_all'),
     path('teachers/',All_teachers_view.as_view(),name = 'teachers_all'),
@@ -14,4 +14,6 @@ urlpatterns = [
     path('courses/<int:course_id>/students/', CourseSubscriptionView.as_view(), name='course_students_list'),
     path('lessons_my/', LessonTeacherView.as_view({'get':'list','post':'create'})),
     path('lessons_my/<int:pk>/', LessonTeacherView.as_view({'put':'update','delete':'destroy'})),
+    path('aplication/',TeacherApplicationsView.as_view(),name = 'aplication'),
+    path('aplication/<int:aplication_id>/', TeacherActivateView.as_view(), name='activate'),
 ]
